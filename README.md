@@ -1,4 +1,4 @@
-﻿# tfreader
+﻿#  TerraShield (to be at this time the name is:) tfreader : [tfreader](https://pypi.org/project/tfreader-iac/)
 
 FastAPI service to read Terraform IaC and return recognized resources from `.tf` files.
 
