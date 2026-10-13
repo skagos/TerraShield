@@ -7,3 +7,5 @@ __pycache__/
 *.tfstate
 *.egg-info/
 artifacts/
+build/
+dist/

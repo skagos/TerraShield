@@ -26,7 +26,7 @@ from app.terraform_parser import parse_tf_content, parse_tf_directory, parse_tf_
 
 app = FastAPI(
     title="Terraform Reader API",
-    version="0.1.0",
+    version="0.1.1",
     description=(
         "Upload Terraform IaC as a single .tf file or a zipped folder, then get "
         "recognized resource types."

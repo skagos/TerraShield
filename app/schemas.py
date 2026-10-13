@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from typing import Literal
 
@@ -25,7 +25,7 @@ class SecurityFinding(BaseModel):
     file: str = Field(..., description="Terraform file where the resource was found.")
     severity: Literal["low", "medium", "high", "critical"]
     category: Literal["identity", "network", "storage", "compute", "monitoring", "general"]
-    source_library: Literal["checkov", "tfsec", "terrascan"]
+    source_library: Literal["checkov", "tfsec"]
     issue: str
     recommendation: str
     rule_id: str

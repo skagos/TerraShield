@@ -17,7 +17,7 @@ _SEVERITY_WEIGHT = {
     "critical": 20,
 }
 
-_SCANNERS = ("checkov", "tfsec", "terrascan")
+_SCANNERS = ("checkov", "tfsec")
 _SEVERITY_ORDER = ("critical", "high", "medium", "low")
 _SEVERITY_PRIORITY = {
     "critical": "P0 - Immediate",
@@ -145,11 +145,9 @@ class SecurityAnalyzer:
         else:
             checkov = self._run_checkov(resolved_scan_dir, matcher)
             tfsec = self._run_tfsec(resolved_scan_dir, matcher)
-            terrascan = self._run_terrascan(resolved_scan_dir, matcher)
             for name, result in [
                 ("checkov", checkov),
                 ("tfsec", tfsec),
-                ("terrascan", terrascan),
             ]:
                 scanner_status[name] = result.status
                 findings.extend(result.findings)
@@ -175,7 +173,7 @@ class SecurityAnalyzer:
         score = self._calculate_score(severity_counts)
         summary = (
             f"Detected {len(findings)} finding(s) from scanner libraries "
-            f"(checkov={scanner_status['checkov']}, tfsec={scanner_status['tfsec']}, terrascan={scanner_status['terrascan']})."
+            f"(checkov={scanner_status['checkov']}, tfsec={scanner_status['tfsec']})."
         )
         if scanner_errors:
             summary = f"{summary} Scanner notes: {' | '.join(scanner_errors)}"
@@ -317,52 +315,6 @@ class SecurityAnalyzer:
                     issue=issue,
                     recommendation=recommendation,
                     rule_id=str(item.get("long_id") or item.get("rule_id") or "TFSEC.UNKNOWN"),
-                    compliance=[],
-                )
-            )
-
-        status = "ok" if not stderr else "ok"
-        return _ScannerResult(findings=findings, status=status)
-
-    def _run_terrascan(self, scan_dir: Path, matcher: _ResourceMatcher) -> _ScannerResult:
-        exe = shutil.which("terrascan")
-        if not exe:
-            return _ScannerResult(findings=[], status="unavailable", error="terrascan executable not found on PATH.")
-
-        cmd = [exe, "scan", "-d", str(scan_dir), "-i", "terraform", "-o", "json"]
-        code, stdout, stderr = self._run_command(cmd, cwd=scan_dir)
-        if code not in (0, 3):
-            return _ScannerResult(
-                findings=[],
-                status="error",
-                error=f"terrascan failed (exit {code}): {stderr or stdout}",
-            )
-
-        payload = _safe_json_load(stdout)
-        results = payload.get("results", {}) if isinstance(payload, dict) else {}
-        violations = results.get("violations", []) if isinstance(results, dict) else []
-        findings: list[SecurityFinding] = []
-        for item in violations:
-            if not isinstance(item, dict):
-                continue
-            issue = str(item.get("description") or item.get("rule_name") or "Policy violation")
-            recommendation = str(item.get("resolution") or "Review and remediate this policy violation.")
-            rid, rtype, rname, file_name = matcher.resolve(
-                raw_resource=str(item.get("resource_name") or ""),
-                raw_file=str(item.get("file") or ""),
-            )
-            findings.append(
-                SecurityFinding(
-                    resource=rid,
-                    resource_type=rtype,
-                    resource_name=rname,
-                    file=file_name,
-                    severity=_normalize_severity(item.get("severity")),
-                    category=_detect_category(rtype, issue),  # type: ignore[arg-type]
-                    source_library="terrascan",
-                    issue=issue,
-                    recommendation=recommendation,
-                    rule_id=str(item.get("rule_id") or item.get("rule_name") or "TERRASCAN.UNKNOWN"),
                     compliance=[],
                 )
             )

@@ -1,4 +1,8 @@
-﻿#  TerraShield (to be at this time the name is:) tfreader : [tfreader](https://pypi.org/project/tfreader-iac/)
+# TerraShield / tfreader
+
+[tfreader-iac on PyPI](https://pypi.org/project/tfreader-iac/) — Terraform resource parser and security scanner with a CLI and FastAPI service.
+
+Supports Python 3.10–3.15, including Python 3.15.0.
 
 FastAPI service to read Terraform IaC and return recognized resources from `.tf` files.
 
@@ -25,22 +29,49 @@ python -m pip install --user pipx
 python -m pipx ensurepath
 ```
 
-Install from GitHub:
+Install from PyPI (no repository clone needed):
 
 ```bash
-pipx install git+https://github.com/skagos/tfreader.git
+pipx install tfreader-iac
+```
+
+To use Python 3.15 explicitly, first install Python 3.15.0, then run:
+
+```bash
+pipx install --python python3.15 tfreader-iac
+```
+
+On Windows, use `pipx install --python 3.15 tfreader-iac`.
+Restart your terminal after `pipx ensurepath` if `tfreader` is not found.
+
+Upgrade an existing installation:
+
+```bash
+pipx upgrade tfreader-iac
+```
+
+Alternatively, install in an activated virtual environment:
+
+```bash
+python -m pip install --upgrade tfreader-iac
 ```
 
 Then run:
 
 ```bash
+tfreader --help
 tfreader scan ./infra --fail-on high
 ```
 
-If publishing to PyPI later, users can install with:
+The package name is `tfreader-iac`; the installed command is `tfreader`.
+Security scanners (`checkov`, `tfsec`) are separate tools and
+must be installed on PATH to produce their findings. Missing scanners are
+reported in the scan summary; installation of this package does not install them.
+
+For the development version:
 
 ```bash
-pipx install tfreader-iac
+pipx install git+https://github.com/skagos/TerraShield.git
 ```
 
 ## CLI (CI/CD Security Gate)
@@ -166,7 +197,7 @@ curl -X POST "http://127.0.0.1:8000/analyze/folder" \
 - Security analysis phase:
   - runs as an additive layer after Terraform parsing
   - endpoints return both parsed resources and structured findings with severities (`low`, `medium`, `high`, `critical`)
-  - findings are produced by scanner libraries: `checkov`, `tfsec`, and `terrascan`
+  - findings are produced by scanner libraries: `checkov` and `tfsec`
   - each finding includes `source_library` so the UI can show which scanner detected it
   - includes a severity-weighted security score (`0-100`)
   - findings include resource-level keys (for attaching to visualization nodes) and optional compliance tags (CIS/NIST/ISO mapping hooks)
@@ -223,3 +254,31 @@ steps:
     PathtoPublish: artifacts
     ArtifactName: tfreader-security
 ```
+
+## Publishing a new PyPI release
+
+The PyPI description comes from this README and is updated by uploading a
+new release. Version `0.1.1` includes Python 3.15 compatibility, removal of the Terrascan
+integration, and the installation instructions above.
+
+Build and validate the distributions:
+
+```bash
+python -m pip install --upgrade build twine
+python -m build
+python -m twine check dist/*
+```
+
+Upload using a project-scoped PyPI API token (username `__token__`, token as
+password when prompted; do not commit the token):
+
+```bash
+python -m twine upload dist/tfreader_iac-0.1.1*
+```
+
+Alternatively, configure a PyPI Trusted Publisher for GitHub owner `skagos`,
+repository `TerraShield`, workflow `publish.yml`, environment `pypi`, then
+run the **Publish to PyPI** workflow on the tested release commit. The workflow
+checks Python 3.15, builds and validates the release before uploading it.
+See [PyPI Trusted Publishing setup](https://docs.pypi.org/trusted-publishers/adding-a-publisher/).
+Every subsequent upload needs a new version in `pyproject.toml` and `app/main.py`.
